@@ -3,7 +3,7 @@ mod player_plugin;
 mod terrain_plugin;
 
 use bevy::prelude::*;
-use bevy_rapier2d::{plugin::{NoUserData, RapierPhysicsPlugin}, render::RapierDebugRenderPlugin};
+use bevy_rapier2d::plugin::{NoUserData, RapierPhysicsPlugin};
 use camera_plugin::CameraPlugin;
 use player_plugin::PlayerPlugin;
 use terrain_plugin::TerrainPlugin;
