@@ -1,3 +1,3 @@
 Bevy WalkAround:
 
-[/home/giulio/game_preview.mp4]
+![/home/giulio/game_preview.mp4]
