@@ -29,7 +29,7 @@ fn glow_at_hovering(
             if (terrain_transform.translation.x - player_transform.translation.x).abs() < 100. {
                 let material = materials.get_mut(&terrain_cube.color_handle).unwrap();
                 let old_color = terrain_cube.color.to_srgba();
-                let increase_color = 1.;
+                let increase_color = 2.;
                 let new_color = Color::srgb(old_color.red+ increase_color, old_color.green + increase_color, old_color.blue + increase_color);
                 material.color = new_color;
             } else {
