@@ -9,6 +9,15 @@ impl Plugin for PlayerPlugin {
     }
 }
 
+#[derive(Event)]
+struct AttachJointEvent {
+    player: Entity,
+    parent: Entity,
+}
+
+#[derive(Component)]
+struct PlayerPart;
+
 #[derive(Component)]
 pub struct Player {
     pub side_lenght: f32,
@@ -16,22 +25,25 @@ pub struct Player {
 
 fn spawn_player(
     mut commands: Commands,
+    //mut event_writer: EventWriter<AttachJointEvent>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let player = Player { side_lenght: 100. };
-    
-    //let half = player.side_lenght / 2.;
-    //let rectangle_mesh = Mesh2d(meshes.add(Rectangle::new(player.side_lenght, player.side_lenght)));
-    //let rectangle_collider = Collider::cuboid(half, half);
-    //let mesh_and_collider = (rectangle_collider, rectangle_mesh);
-    let circle_mesh = Mesh2d(meshes.add(Circle::new(player.side_lenght)));
-    let circle_collider = Collider::ball(player.side_lenght);
-    let mesh_and_collider = (circle_collider, circle_mesh);
+    let player = Player { side_lenght: 200. };
+
+    let half = player.side_lenght / 2.;
+    let rectangle_mesh = Mesh2d(meshes.add(Rectangle::new(player.side_lenght, player.side_lenght)));
+    let rectangle_collider = Collider::cuboid(half, half);
+    let mesh_and_collider = (rectangle_collider, rectangle_mesh);
+    //let circle_mesh = Mesh2d(meshes.add(Circle::new(player.side_lenght)));
+    //let circle_collider = Collider::ball(player.side_lenght);
+    //let mesh_and_collider = (circle_collider, circle_mesh);
     let position = Transform::from_xyz(0., 200., 0.);
 
-    commands
-        .spawn(player)
+    let player_side_lenght = player.side_lenght;
+
+    let mut player = commands.spawn(player);
+    let player = player
         // physic
         .insert(RigidBody::Dynamic)
         .insert(Restitution::default())
@@ -44,15 +56,46 @@ fn spawn_player(
             linear_damping: 3.5,
             angular_damping: 2.0,
         })
-        .insert(GravityScale(1.2))
+        .insert(GravityScale(0.))
         .insert(ActiveEvents::COLLISION_EVENTS)
         // position, shape, color
-        .insert(position)
-        .insert(mesh_and_collider)
+        .insert((position, KinematicCharacterController::default()))
+        .insert(mesh_and_collider.clone())
         .insert(MeshMaterial2d(materials.add(Color::srgb(4., 1., 4.))));
+
+    let player_id = player.id();
+
+    for _i in 2..4 {
+        let joint = RevoluteJointBuilder::new()
+            .local_anchor1(Vec2::new(-player_side_lenght, 0.))
+            .local_anchor2(Vec2::new(player_side_lenght, 0.))
+            .build();
+        let mut player_part = commands.spawn(PlayerPart);
+
+        player_part
+            // physic
+            .insert(RigidBody::Dynamic)
+            .insert(Restitution::default())
+            .insert(ColliderMassProperties::Density(0.002))
+            .insert(ExternalForce {
+                force: Vec2::new(0.0, 0.0),
+                torque: 0.,
+            })
+            .insert(Damping {
+                linear_damping: 3.5,
+                angular_damping: 2.0,
+            })
+            .insert(GravityScale(1.2))
+            .insert(ActiveEvents::COLLISION_EVENTS)
+            // position, shape, color
+            .insert((position, KinematicCharacterController::default()))
+            .insert((Mesh2d(meshes.add(Circle::new(30.))), Collider::ball(30.)))
+            .insert(MeshMaterial2d(materials.add(Color::srgb(4., 1., 4.))))
+            .insert(ImpulseJoint::new(player_id, joint));
+    }
 }
 
-const PLAYER_ACCELERATION_FORCE: f32 = 280_000.;
+const PLAYER_ACCELERATION_FORCE: f32 = 80_000.;
 
 fn move_player(
     //mut player: Query<&mut Transform, With<Player>>,
@@ -64,18 +107,18 @@ fn move_player(
 ) {
     let mut direction = Vec2::ZERO;
     let mut torque_rotation = 0f32;
-    if kb_input.pressed(KeyCode::KeyW) {
-        torque_rotation = -1.;
-    }
-    if kb_input.pressed(KeyCode::KeyS) {
-        torque_rotation = 1.;
-    }
     //if kb_input.pressed(KeyCode::KeyW) {
-    //    direction += Vec2 { x: 0.0, y: 1. };
+    //    torque_rotation = -1.;
     //}
     //if kb_input.pressed(KeyCode::KeyS) {
-    //    direction += Vec2 { x: 0.0, y: -1. };
+    //    torque_rotation = 1.;
     //}
+    if kb_input.pressed(KeyCode::KeyW) {
+        direction += Vec2 { x: 0.0, y: 1. };
+    }
+    if kb_input.pressed(KeyCode::KeyS) {
+        direction += Vec2 { x: 0.0, y: -1. };
+    }
     if kb_input.pressed(KeyCode::KeyA) {
         direction += Vec2 { x: -1.0, y: 0. };
     }
