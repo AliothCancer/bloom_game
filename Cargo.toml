@@ -13,5 +13,5 @@ opt-level = 3
 
 [dependencies]
 bevy = { version = "0.15.0", features = ["wayland","dynamic_linking"] }
-bevy_rapier2d = { version = "0.28.0", features = ["debug-render-2d", "simd-stable"] }
+bevy_rapier2d = { version = "0.28.0", features = ["debug-render-2d", "simd-stable", "parallel"] }
 bevy-inspector-egui = "0.28.0"

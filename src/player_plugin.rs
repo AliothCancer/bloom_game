@@ -11,7 +11,7 @@ impl Plugin for PlayerPlugin {
 
 #[derive(Component)]
 pub struct Player {
-    side_lenght: f32,
+    pub side_lenght: f32,
 }
 
 fn spawn_player(
@@ -20,10 +20,15 @@ fn spawn_player(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let player = Player { side_lenght: 100. };
-    let half = player.side_lenght / 2.;
-
-    let shape = meshes.add(Rectangle::new(player.side_lenght, player.side_lenght));
-    let position = Transform::from_xyz(0., 0., 0.);
+    
+    //let half = player.side_lenght / 2.;
+    //let rectangle_mesh = Mesh2d(meshes.add(Rectangle::new(player.side_lenght, player.side_lenght)));
+    //let rectangle_collider = Collider::cuboid(half, half);
+    //let mesh_and_collider = (rectangle_collider, rectangle_mesh);
+    let circle_mesh = Mesh2d(meshes.add(Circle::new(player.side_lenght)));
+    let circle_collider = Collider::ball(player.side_lenght);
+    let mesh_and_collider = (circle_collider, circle_mesh);
+    let position = Transform::from_xyz(0., 200., 0.);
 
     commands
         .spawn(player)
@@ -39,15 +44,15 @@ fn spawn_player(
             linear_damping: 3.5,
             angular_damping: 2.0,
         })
-        .insert(GravityScale(1.))
-        .insert(Collider::cuboid(half, half))
+        .insert(GravityScale(1.2))
+        .insert(ActiveEvents::COLLISION_EVENTS)
         // position, shape, color
         .insert(position)
-        .insert(Mesh2d(shape))
-        .insert(MeshMaterial2d(materials.add(Color::srgb(1., 1., 6.))));
+        .insert(mesh_and_collider)
+        .insert(MeshMaterial2d(materials.add(Color::srgb(4., 1., 4.))));
 }
 
-const PLAYER_ACCELERATION_FORCE: f32 = 20_000.;
+const PLAYER_ACCELERATION_FORCE: f32 = 280_000.;
 
 fn move_player(
     //mut player: Query<&mut Transform, With<Player>>,
