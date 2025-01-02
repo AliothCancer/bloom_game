@@ -1,5 +1,9 @@
-use bevy::prelude::*;
+use bevy::{color::palettes::tailwind::RED_100, prelude::*};
 use bevy_rapier2d::prelude::*;
+
+use crate::mechanical_component::generic::{
+    GenericMechanicalComponentBundle, MyPosition, MyRigidBody, Shape,
+};
 
 pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
@@ -16,103 +20,54 @@ struct AttachJointEvent {
 }
 
 #[derive(Component)]
+struct Cube;
+#[derive(Component)]
 struct PlayerPart;
 
 #[derive(Component)]
 pub struct Player {
-    pub side_lenght: f32,
+    pub lenght: f32,
+    pub accel_force: f32,
 }
 
 fn spawn_player(
     mut commands: Commands,
-    //mut event_writer: EventWriter<AttachJointEvent>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let player = Player { side_lenght: 200. };
-
-    let half = player.side_lenght / 2.;
-    let rectangle_mesh = Mesh2d(meshes.add(Rectangle::new(player.side_lenght, player.side_lenght)));
-    let rectangle_collider = Collider::cuboid(half, half);
-    let mesh_and_collider = (rectangle_collider, rectangle_mesh);
-    //let circle_mesh = Mesh2d(meshes.add(Circle::new(player.side_lenght)));
-    //let circle_collider = Collider::ball(player.side_lenght);
-    //let mesh_and_collider = (circle_collider, circle_mesh);
-    let position = Transform::from_xyz(0., 200., 0.);
-
-    let player_side_lenght = player.side_lenght;
-
-    let mut player = commands.spawn(player);
-    let player = player
-        // physic
-        .insert(RigidBody::Dynamic)
-        .insert(Restitution::default())
-        .insert(ColliderMassProperties::Density(0.002))
-        .insert(ExternalForce {
-            force: Vec2::new(0.0, 0.0),
-            torque: 0.,
-        })
-        .insert(Damping {
-            linear_damping: 3.5,
-            angular_damping: 2.0,
-        })
-        .insert(GravityScale(0.))
-        .insert(ActiveEvents::COLLISION_EVENTS)
-        // position, shape, color
-        .insert((position, KinematicCharacterController::default()))
-        .insert(mesh_and_collider.clone())
-        .insert(MeshMaterial2d(materials.add(Color::srgb(4., 1., 4.))));
-
-    let player_id = player.id();
-
-    for _i in 2..4 {
-        let joint = RevoluteJointBuilder::new()
-            .local_anchor1(Vec2::new(-player_side_lenght, 0.))
-            .local_anchor2(Vec2::new(player_side_lenght, 0.))
-            .build();
-        let mut player_part = commands.spawn(PlayerPart);
-
-        player_part
-            // physic
-            .insert(RigidBody::Dynamic)
-            .insert(Restitution::default())
-            .insert(ColliderMassProperties::Density(0.002))
-            .insert(ExternalForce {
-                force: Vec2::new(0.0, 0.0),
-                torque: 0.,
-            })
-            .insert(Damping {
-                linear_damping: 3.5,
-                angular_damping: 2.0,
-            })
-            .insert(GravityScale(1.2))
-            .insert(ActiveEvents::COLLISION_EVENTS)
-            // position, shape, color
-            .insert((position, KinematicCharacterController::default()))
-            .insert((Mesh2d(meshes.add(Circle::new(30.))), Collider::ball(30.)))
-            .insert(MeshMaterial2d(materials.add(Color::srgb(4., 1., 4.))))
-            .insert(ImpulseJoint::new(player_id, joint));
-    }
+    commands.spawn((
+        Player {
+            lenght: PLAYER_LENGTH,
+            accel_force: PLAYER_ACCELERATION_FORCE,
+        },
+        GenericMechanicalComponentBundle::new(
+            MyRigidBody::Dynamic { mass: 1. },
+            Shape::Rect {
+                width: PLAYER_LENGTH,
+                heigt: PLAYER_LENGTH * 2.,
+            },
+            RED_100.into(),
+            MyPosition { x: 0., y: 100. },
+            &mut meshes,
+            &mut materials,
+        ),
+    ));
 }
-
-const PLAYER_ACCELERATION_FORCE: f32 = 80_000.;
+const PLAYER_LENGTH: f32 = 50.; // meters
+const PLAYER_ACCELERATION_FORCE: f32 = 1000.; // newton
 
 fn move_player(
-    //mut player: Query<&mut Transform, With<Player>>,
     ext_forces: Single<&mut ExternalForce, With<Player>>,
-    //mut grav_scale: Query<&mut GravityScale>,
-    //time: Res<Time>,
-    //mut controller: Query<&mut KinematicCharacterController>,
     kb_input: Res<ButtonInput<KeyCode>>,
 ) {
     let mut direction = Vec2::ZERO;
     let mut torque_rotation = 0f32;
-    //if kb_input.pressed(KeyCode::KeyW) {
-    //    torque_rotation = -1.;
-    //}
-    //if kb_input.pressed(KeyCode::KeyS) {
-    //    torque_rotation = 1.;
-    //}
+    if kb_input.pressed(KeyCode::ArrowRight) {
+        torque_rotation = -1.;
+    }
+    if kb_input.pressed(KeyCode::ArrowLeft) {
+        torque_rotation = 1.;
+    }
     if kb_input.pressed(KeyCode::KeyW) {
         direction += Vec2 { x: 0.0, y: 1. };
     }
