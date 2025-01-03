@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use bevy::render::camera::Viewport;
 
 use crate::player_plugin::Player;
+use crate::robot_factory::robot_parts::{Robot, RobotLeg};
 
 /// Camera lerp factor.
 const CAM_LERP_FACTOR: f32 = 10.7;
@@ -33,7 +34,7 @@ fn setup_camera(mut commands: Commands) {
 /// Update the camera position by tracking the player.
 fn update_camera(
     mut camera_query: Query<(&mut Transform, &mut OrthographicProjection), (With<Camera2d>, Without<Player>)>,
-    player: Query<&Transform, (With<Player>, Without<Camera2d>)>,
+    player: Query<&Transform, (With<RobotLeg>, Without<Camera2d>)>,
     kb_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {

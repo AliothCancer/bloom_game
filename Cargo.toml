@@ -12,7 +12,7 @@ opt-level = 3
 
 
 [dependencies]
-bevy = { version = "0.15.0", features = ["wayland","dynamic_linking"] }
+bevy = { version = "0.15.0", features = ["wayland","dynamic_linking", "bevy_dev_tools"] }
 bevy_rapier2d = { version = "0.28.0", features = ["debug-render-2d", "simd-stable", "parallel"] }
 bevy-inspector-egui = "0.28.0"
 iyes_perf_ui = {git = "https://github.com/IyesGames/iyes_perf_ui.git"}
