@@ -69,7 +69,7 @@ fn spawn_terrain(
         (0..square_nums).for_each(|i| {
             let x = -lenght / 2. + (square_size + gap) * (i as f32);
             //println!("{}",x);
-            let y = -100.;
+            let y = -900.;
             let color = Color::hsl(360. * i as f32 / square_nums as f32, 0.95, 0.6);
             let color_handle = materials.add(color);
 
