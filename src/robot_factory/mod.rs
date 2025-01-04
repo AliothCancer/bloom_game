@@ -17,7 +17,7 @@ pub fn spawn_robot(
     // Spawna l'entità principale del Robot
     let robot = commands
         .spawn((
-            Robot,
+            Robot{ rope_lenght: 100.},
             Transform::from_xyz(0., 100., 0.),
             Visibility::default(),
         ))

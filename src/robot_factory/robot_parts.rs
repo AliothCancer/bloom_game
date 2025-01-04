@@ -2,9 +2,11 @@ use bevy::{color::palettes::tailwind::BLUE_950, prelude::*};
 
 use super::{GenericMechanicalComponentBundle, MyPosition, MyRigidBody, Shape};
 
-#[derive(Component, Default)]
-#[require(RobotBody, RobotHead)]
-pub struct Robot; // Tag per l'entità principale del robot.
+#[derive(Component)]
+pub struct Robot{
+    pub rope_lenght: f32
+} // Tag per l'entità principale del robot.
+
 
 #[derive(Component, Default)]
 pub struct RobotHead;
@@ -27,7 +29,7 @@ pub fn spawn_robot_head(
                     heigt: 50.,
                 },
                 BLUE_950.into(),
-                MyPosition { x: 0., y: 0. },
+                Transform::from_xyz(0.0, 0.0, 0.0),
                 meshes,
                 materials,
             ),
@@ -47,7 +49,7 @@ pub fn spawn_robot_leg(
                     MyRigidBody::Dynamic { mass: 0.1 },
                     Shape::Ball { radius: 30. },
                     BLUE_950.into(),
-                    MyPosition { x: 0., y: -100. },
+                    Transform::from_xyz(0.0, 0.0, 0.0),
                     meshes,
                     materials,
                 ),

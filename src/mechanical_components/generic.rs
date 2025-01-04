@@ -20,6 +20,11 @@ pub struct MyPosition {
     pub x: f32,
     pub y: f32,
 }
+impl MyPosition{
+    pub fn to_transform(&self) -> Transform{
+        Transform::from_xyz(self.x, self.y, 0.0)
+    }
+}
 pub enum Shape {
     Rect { width: f32, heigt: f32 },
     Ball { radius: f32 },
@@ -47,7 +52,7 @@ impl GenericMechanicalComponentBundle {
         rigid_body: MyRigidBody,
         shape: Shape,
         color: Color,
-        position: MyPosition,
+        position: Transform,
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<ColorMaterial>>,
     ) -> Self {
@@ -67,7 +72,7 @@ impl GenericMechanicalComponentBundle {
                 angular_damping: 2.0,
             },
             gravity_scale: GravityScale(0.0),
-            position: Transform::from_xyz(position.x, position.y, 0.0),
+            position,
             material: MeshMaterial2d(materials.add(ColorMaterial::from_color(color))),
             mesh: shape.generate_mesh(meshes),
             collider: shape.generate_collider(),

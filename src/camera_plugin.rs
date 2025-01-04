@@ -6,7 +6,7 @@ use bevy::prelude::*;
 use bevy::render::camera::Viewport;
 
 use crate::player_plugin::Player;
-use crate::robot_factory::robot_parts::{Robot, RobotHead, RobotBody};
+use crate::robot_factory::robot_parts::{Robot, RobotBody, RobotHead};
 
 /// Camera lerp factor.
 const CAM_LERP_FACTOR: f32 = 10.7;
@@ -20,8 +20,11 @@ impl Plugin for CameraPlugin {
 }
 
 fn setup_camera(mut commands: Commands) {
+    let mut orto_proj = OrthographicProjection::default_2d();
+    *orto_proj.get_field_mut::<f32>("scale").unwrap() = 3.;
     commands.spawn((
         Camera2d,
+        orto_proj,
         Camera {
             hdr: true, // 1. HDR is required for bloom
             ..default()
@@ -33,7 +36,7 @@ fn setup_camera(mut commands: Commands) {
 
 /// Update the camera position by tracking the player.
 fn update_camera(
-    mut camera_query: Query<(&mut Transform, &mut OrthographicProjection), (With<Camera2d>)>,
+    mut camera_query: Query<(&mut Transform, &mut OrthographicProjection), With<Camera2d>>,
     player: Query<&GlobalTransform, (With<RobotHead>, Without<Camera2d>)>,
     kb_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,

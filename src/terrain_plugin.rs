@@ -44,7 +44,7 @@ fn spawn_cube(
                 heigt: CUBE_LENGTH,
             },
             color,
-            position,
+            position.to_transform(),
             &mut meshes,
             &mut materials,
         ),
@@ -69,7 +69,7 @@ fn spawn_terrain(
         (0..square_nums).for_each(|i| {
             let x = -lenght / 2. + (square_size + gap) * (i as f32);
             //println!("{}",x);
-            let y = -900.;
+            let y = -1000.;
             let color = Color::hsl(360. * i as f32 / square_nums as f32, 0.95, 0.6);
             let color_handle = materials.add(color);
 
@@ -85,7 +85,7 @@ fn spawn_terrain(
                         heigt: CUBE_LENGTH,
                     },
                     color,
-                    MyPosition { x, y },
+                    MyPosition { x, y }.to_transform(),
                     &mut meshes,
                     &mut materials,
                 ),
