@@ -1,4 +1,4 @@
-use bevy::{color::palettes::css::WHITE_SMOKE, prelude::*};
+use bevy::{color::palettes::css::WHITE_SMOKE, math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::*;
 
 const DEFAULT_COLOR: Srgba = WHITE_SMOKE;
@@ -7,7 +7,8 @@ const DEFAULT_COLOR: Srgba = WHITE_SMOKE;
 pub struct GenericMechanicalComponentBundle {
     pub rigid_body: RigidBody,
     pub collider_mass: ColliderMassProperties,
-    pub external_force: ExternalForce,
+    pub velocity: Velocity,
+    pub ext_force: ExternalImpulse,
     pub damping: Damping,
     pub gravity_scale: GravityScale,
     pub position: Transform,
@@ -66,10 +67,11 @@ impl GenericMechanicalComponentBundle {
         Self {
             rigid_body,
             collider_mass,
-            external_force: ExternalForce::default(),
+            velocity: Velocity::default(),
+            ext_force: ExternalImpulse{ impulse: Vec2::ZERO, torque_impulse: 0.0 },
             damping: Damping {
                 linear_damping: 3.5,
-                angular_damping: 2.0,
+                angular_damping: 0.4,
             },
             gravity_scale: GravityScale(0.0),
             position,

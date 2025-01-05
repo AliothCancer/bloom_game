@@ -1,10 +1,7 @@
 pub mod player_assembly;
 
 use bevy::{
-    color::palettes::tailwind::{BLUE_100, BLUE_950, RED_100},
-    ecs::{observer::TriggerTargets, query::QueryData},
-    prelude::*,
-    text::cosmic_text::ttf_parser::head, utils::hashbrown::HashMap,
+    color::palettes::tailwind::{BLUE_100, BLUE_950, RED_100}, ecs::{observer::TriggerTargets, query::QueryData}, math::VectorSpace, prelude::*, text::cosmic_text::ttf_parser::head, transform, utils::hashbrown::HashMap
 };
 use bevy_rapier2d::prelude::*;
 
@@ -100,7 +97,7 @@ fn spawn_player(
         .id();
     robot_parts.push(head);
     // build the joint
-    let head_joint = RopeJointBuilder::new(4.)
+    let head_joint = RopeJointBuilder::new(40.)
         .local_anchor1(loc_anchor1)
         .local_anchor2(loc_anchor2);
     let body_part1 = commands
@@ -108,7 +105,7 @@ fn spawn_player(
             RobotBody,
             GenericMechanicalComponentBundle::new(
                 MyRigidBody::Dynamic {
-                    mass: head_mass * 1.3,
+                    mass: head_mass * 0.1,
                 },
                 Shape::Ball {
                     radius: body_part1_radius,
@@ -134,14 +131,14 @@ fn spawn_player(
         let last_ball_radius= ball_radiuses.last().unwrap().to_owned();
         ball_radiuses.push(radius);
         let last_x_pos = positions.last().unwrap().translation.x;
-
         let x_pos = last_x_pos+radius+last_ball_radius+gap_between_balls;
+        positions.push(Transform::from_xyz(x_pos, 0., 0.));
         let body_part = commands
             .spawn((
                 RobotBody,
                 GenericMechanicalComponentBundle::new(
                     MyRigidBody::Dynamic {
-                        mass: head_mass * ((ball_nums - i + 1) as f32),
+                        mass: head_mass * 0.1,
                     },
                     Shape::Ball { radius },
                     Color::linear_rgb(0., 0., (ball_nums - i) as f32 * color_intensity),
@@ -171,15 +168,17 @@ fn spawn_player(
 
     // add child to player
     commands.entity(player).add_children(&robot_parts);
+    //dbg!(positions);
 }
 const PLAYER_LENGTH: f32 = 50.; // meters
-const PLAYER_ACCELERATION_FORCE: f32 = 90_000.; // newton
+const PLAYER_ACCELERATION_FORCE: f32 = 50.; // newton
 
 fn move_player(
-    ext_forces: Single<&mut ExternalForce, With<RobotHead>>,
+    velocity: Single<(&mut ExternalImpulse, &mut Velocity), With<RobotHead>>,
     rope_length: Single<&mut Robot, With<Player>>,
     mut rope_entities: Query<&mut ImpulseJoint>,
     kb_input: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
 ) {
     let mut direction = Vec2::ZERO;
     let mut torque_rotation = 0f32;
@@ -228,7 +227,8 @@ fn move_player(
         }
     }
     //  dbg!(**ext_forces);
-    let mut ext_force = ext_forces.into_inner();
-    ext_force.force = direction * PLAYER_ACCELERATION_FORCE;
-    ext_force.torque = torque_rotation * PLAYER_ACCELERATION_FORCE * 100.;
+    let (mut impulse, mut velocity) = velocity.into_inner();
+    velocity.linvel.lerp(Vec2::ZERO, 0.2);
+    impulse.impulse += direction * PLAYER_ACCELERATION_FORCE* 200. * time.delta_secs();
+    
 }
