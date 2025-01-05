@@ -1,7 +1,13 @@
 pub mod player_assembly;
 
 use bevy::{
-    color::palettes::tailwind::{BLUE_100, BLUE_950, RED_100}, ecs::{observer::TriggerTargets, query::QueryData}, math::VectorSpace, prelude::*, text::cosmic_text::ttf_parser::head, transform, utils::hashbrown::HashMap
+    color::palettes::tailwind::{BLUE_100, BLUE_950, RED_100},
+    ecs::{observer::TriggerTargets, query::QueryData},
+    math::VectorSpace,
+    prelude::*,
+    text::cosmic_text::ttf_parser::head,
+    transform,
+    utils::hashbrown::HashMap,
 };
 use bevy_rapier2d::prelude::*;
 
@@ -13,6 +19,7 @@ use crate::{
         robot_parts::{Robot, RobotBody, RobotHead},
         spawn_robot,
     },
+    MyTimer,
 };
 
 pub struct PlayerPlugin;
@@ -56,7 +63,7 @@ fn spawn_player(
     let head_color = Color::linear_rgb(3., 0., 16.);
     let head_radius = 100.;
     let head_pos = Transform::from_xyz(0.0, 0.0, 0.0);
-    positions.push( head_pos);
+    positions.push(head_pos);
     let loc_anchor1 = Vec2 { x: 0., y: 0. };
     let loc_anchor2 = Vec2 { x: 0., y: 0. };
 
@@ -67,12 +74,13 @@ fn spawn_player(
     positions.push(Transform::from_xyz(body_part1_x, 0., 0.));
 
     // other body part config
-    let ball_nums = 8;
+    let ball_nums = 48 * 3;
     let color_intensity = 10.;
 
     let player = commands
         .spawn((
             Player,
+            TriggerOscillation(false),
             player_pos.to_transform(),
             robot,
             Visibility::default(),
@@ -128,10 +136,10 @@ fn spawn_player(
 
     for i in 1..=ball_nums {
         let radius = head_radius * ((ball_nums - i + 1) as f32) / ball_nums as f32;
-        let last_ball_radius= ball_radiuses.last().unwrap().to_owned();
+        let last_ball_radius = ball_radiuses.last().unwrap().to_owned();
         ball_radiuses.push(radius);
         let last_x_pos = positions.last().unwrap().translation.x;
-        let x_pos = last_x_pos+radius+last_ball_radius+gap_between_balls;
+        let x_pos = last_x_pos + radius + last_ball_radius + gap_between_balls;
         positions.push(Transform::from_xyz(x_pos, 0., 0.));
         let body_part = commands
             .spawn((
@@ -153,8 +161,8 @@ fn spawn_player(
     for (n, pairs_of_parts) in robot_parts.windows(2).enumerate() {
         let part1 = pairs_of_parts[0];
         let part2 = pairs_of_parts[1];
-        if n > 0{
-            rope_distance = ball_radiuses[n-1] + ball_radiuses[n] + gap_between_balls + 3.;
+        if n > 0 {
+            rope_distance = ball_radiuses[n - 1] + ball_radiuses[n] + gap_between_balls + 3.;
         }
         let joint = RopeJointBuilder::new(rope_distance)
             .local_anchor1(Vec2 { x: 0., y: 0. })
@@ -171,14 +179,18 @@ fn spawn_player(
     //dbg!(positions);
 }
 const PLAYER_LENGTH: f32 = 50.; // meters
-const PLAYER_ACCELERATION_FORCE: f32 = 50.; // newton
+const PLAYER_ACCELERATION_FORCE: f32 = 50. * 9.; // newton
 
+#[derive(Component)]
+struct TriggerOscillation(bool);
 fn move_player(
+    mut oscillate: Single<&mut TriggerOscillation, With<Player>>,
     velocity: Single<(&mut ExternalImpulse, &mut Velocity), With<RobotHead>>,
     rope_length: Single<&mut Robot, With<Player>>,
     mut rope_entities: Query<&mut ImpulseJoint>,
     kb_input: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
+    mut timer: ResMut<MyTimer>,
 ) {
     let mut direction = Vec2::ZERO;
     let mut torque_rotation = 0f32;
@@ -190,24 +202,6 @@ fn move_player(
     if kb_input.pressed(KeyCode::ArrowLeft) {
         torque_rotation = 1.;
     }
-    //if kb_input.pressed(KeyCode::ArrowUp) {
-    //    rope_length.rope_lenght += 1.;
-    //    rope_entities.iter_mut().for_each(|rope| {
-    //        if let TypedJoint::RopeJoint(mut rope_joint) = rope.data {
-    //            rope_joint.set_max_distance(rope_length.rope_lenght);
-    //        }
-    //    });
-    //    println!("{}", rope_length.rope_lenght);
-    //}
-    //if kb_input.pressed(KeyCode::ArrowDown) {
-    //    rope_length.rope_lenght -= 1.;
-    //    rope_entities.iter_mut().for_each(|rope| {
-    //        if let TypedJoint::RopeJoint(mut rope_joint) = rope.data {
-    //            rope_joint.set_max_distance(rope_length.rope_lenght);
-    //        }
-    //    });
-    //    println!("{}", rope_length.rope_lenght);
-    //}
     if kb_input.pressed(KeyCode::KeyW) {
         direction += Vec2 { x: 0.0, y: 1. };
     }
@@ -221,14 +215,27 @@ fn move_player(
         direction += Vec2 { x: 1.0, y: 0. };
     }
     if direction.x.abs() + direction.y.abs() > 1. {
-        direction *= Vec2 {
-            x: 1. / 2.0f32.sqrt(),
-            y: 1. / 2.0f32.sqrt(),
-        }
+        let module = direction.distance(Vec2::ZERO);
+        direction /= module;
     }
+    let dir_angle = direction.to_angle();
+    let freq_mod = 6.;
+    let oscillation = Vec2 {
+        x: 0.0, //(timer.0.elapsed_secs() * freq_mod).cos(),
+        y: (timer.0.elapsed_secs() * freq_mod).sin(),
+    };
+
+    let mut osc = oscillate.as_mut();
+    if kb_input.pressed(KeyCode::KeyK) {
+        osc.0 = !(osc.0);
+    }
+    if oscillate.into_inner().0 {
+        direction += oscillation * 2.;
+    }
+    timer.0.tick(time.delta());
+
     //  dbg!(**ext_forces);
     let (mut impulse, mut velocity) = velocity.into_inner();
-    velocity.linvel.lerp(Vec2::ZERO, 0.2);
-    impulse.impulse += direction * PLAYER_ACCELERATION_FORCE* 200. * time.delta_secs();
-    
+    //direction = velocity.linvel.normalize_or_zero().lerp(direction, 0.73);
+    impulse.impulse += direction * PLAYER_ACCELERATION_FORCE * 200. * time.delta_secs();
 }

@@ -5,9 +5,13 @@ mod mechanical_components;
 mod robot_factory;
 mod player_plugin;
 mod terrain_plugin;
+mod bevy_rapier2d_example;
 
-use bevy::{diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, SystemInformationDiagnosticsPlugin}, prelude::*};
+use std::f32::consts::PI;
+
+use bevy::{color::palettes::{css::{BLACK, BLUE_VIOLET}, tailwind::BLUE_100}, diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, SystemInformationDiagnosticsPlugin}, prelude::*};
 use bevy_rapier2d::prelude::*;
+use bevy_rapier2d_example::BevyRapierExamplePlugin;
 use camera_plugin::CameraPlugin;
 use iyes_perf_ui::{
     entries::{PerfUiFramerateEntries, PerfUiSystemEntries, PerfUiWindowEntries},
@@ -21,13 +25,19 @@ use bevy::{
 use player_plugin::PlayerPlugin;
 use terrain_plugin::TerrainPlugin;
 
+#[derive(Resource)]
+struct MyTimer(Timer);
 fn main() {
     App::new()
+        .insert_resource(MyTimer(Timer::from_seconds(2.*PI, TimerMode::Repeating)))
+        .insert_resource(ClearColor(BLACK.into()))
         .add_plugins(DefaultPlugins)
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_plugins((CameraPlugin, PlayerPlugin, TerrainPlugin))
-        // debug
+        
+        // DEBUG
         //.add_plugins(RapierDebugRenderPlugin::default())
+        //.add_plugins(BevyRapierExamplePlugin)
         //.add_plugins((
         //    FrameTimeDiagnosticsPlugin,
         //    SystemInformationDiagnosticsPlugin,

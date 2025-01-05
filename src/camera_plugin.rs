@@ -9,7 +9,7 @@ use crate::player_plugin::Player;
 use crate::robot_factory::robot_parts::{Robot, RobotBody, RobotHead};
 
 /// Camera lerp factor.
-const CAM_LERP_FACTOR: f32 = 10.7;
+const CAM_LERP_FACTOR: f32 = 3.7;
 
 pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
@@ -21,7 +21,7 @@ impl Plugin for CameraPlugin {
 
 fn setup_camera(mut commands: Commands) {
     let mut orto_proj = OrthographicProjection::default_2d();
-    *orto_proj.get_field_mut::<f32>("scale").unwrap() = 3.;
+    *orto_proj.get_field_mut::<f32>("scale").unwrap() = 3.*2.;
     commands.spawn((
         Camera2d,
         orto_proj,
@@ -56,12 +56,6 @@ fn update_camera(
 
     let Vec3 { x, y, .. } = player.translation();
     let direction = Vec3::new(x, y, transform.translation.z);
-
-    // Applies a smooth effect to camera movement using interpolation between
-    // the camera position and the player position on the x and y axes.
-    // Here we use the in-game time, to get the elapsed time (in seconds)
-    // since the previous update. This avoids jittery movement when tracking
-    // the player.
     transform.translation = transform
         .translation
         .lerp(direction, time.delta_secs() * CAM_LERP_FACTOR);
